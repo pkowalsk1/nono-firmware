@@ -1,0 +1,14 @@
+services:
+
+  microros-agent:
+    image: microros/micro-ros-agent:humble
+    container_name: microros
+    privileged: true
+    network_mode: host
+    ipc: host
+    volumes:
+      - /dev:/dev 
+      - /dev/shm:/dev/shm
+    devices:
+      - /dev/ttyACM0
+    command: serial --dev /dev/ttyACM0 -v6
