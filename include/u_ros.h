@@ -12,7 +12,6 @@
 #include <sensor_msgs/msg/joint_state.h>
 
 #include "u_ros_observers.h"
-#include "u_ros_subjects.h"
 
 #define NODE_NAME "rpi_pico_node"
 #define NODE_NAMESPACE "nono"

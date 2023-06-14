@@ -11,17 +11,17 @@
 class ImuDriver : EventObserverInterface
 {
 public:
-  ImuDriver(int32_t sensorID, uint8_t address) : id{sensorID}, addr{address}
-  {
-    unique_id_ = ++unique_observers_;
-  };
+  ImuDriver(int32_t sensorID, uint8_t address) : id{sensorID}, addr{address} {};
   ~ImuDriver() {}
 
   bool init();                // TODO: update for obsv
   imu_data_t get_imu_data();  // TODO: update for obsv
 
 protected:
-  void update() override;
+  void update(ImuRosEvent& event)
+  {
+    event.setImuDataQueue(my_data_);
+  }
 
 private:
   int32_t id;
@@ -38,8 +38,8 @@ private:
 
   imu::Quaternion quat;
 
-  int unique_id_ = -1;
-  static int unique_observers_;
+  // TODO: temp
+  imu_data_t my_data_;
 };
 
 #endif /* IMU_H */
