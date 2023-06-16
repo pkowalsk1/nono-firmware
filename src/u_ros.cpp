@@ -1,19 +1,27 @@
-#include "u_ros.h"
+#include "uros/u_ros_cfg.h"
+#include "motors.h"
 
 rcl_publisher_t imu_publisher;
-rcl_publisher_t motor_state_publisher;
+rcl_publisher_t joint_state_publisher;
 
 sensor_msgs__msg__Imu imu_msg;
-sensor_msgs__msg__JointState motor_state_msg;
+sensor_msgs__msg__JointState joint_state_msg;
 
 rclc_executor_t executor;
 rclc_support_t support;
 rcl_allocator_t allocator;
 rcl_node_t node;
 rcl_timer_t imu_timer;
+rcl_timer_t joint_state_timer;
 
-void uRosCreateEntity()
+ImuRosEvent* imu_timer_event = new ImuRosEvent();
+extern WheelMotorDriver left_motor_wheel;
+extern WheelMotorDriver right_motor_wheel;
+
+void uRosCreateEntities()
 {
+  size_t ros_handles_cnt = 0;
+
   set_microros_serial_transports(Serial);
   delay(2000);
 
@@ -27,19 +35,25 @@ void uRosCreateEntity()
     &imu_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, Imu), "imu/data_raw"));
 
   RCCHECK(rclc_publisher_init_default(
-    &motor_state_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
+    &joint_state_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
     "joint_state"));
 
   imuMsgInit(&imu_msg);
-  motorStateMsgInit(&motor_state_msg);
+  motorStateMsgInit(&joint_state_msg);
 
   // create timer,
   RCCHECK(rclc_timer_init_default(
-    &imu_timer, &support, RCL_MS_TO_NS(1 / IMU_TIME_FREQ), imuTimerCallback));
+    &imu_timer, &support, RCL_MS_TO_NS(1000 / IMU_TIMER_FREQ), imuTimerCallback));
+  ros_handles_cnt++;
+
+  RCCHECK(rclc_timer_init_default(
+    &joint_state_timer, &support, RCL_MS_TO_NS(1000 / JOINT_TIMER_FREQ), jointStateTimerCallback));
+  ros_handles_cnt++;
 
   // create executor
-  RCCHECK(rclc_executor_init(&executor, &support.context, 1, &allocator));
+  RCCHECK(rclc_executor_init(&executor, &support.context, ros_handles_cnt, &allocator));
   RCCHECK(rclc_executor_add_timer(&executor, &imu_timer));
+  RCCHECK(rclc_executor_add_timer(&executor, &joint_state_timer));
 }
 
 void imuTimerCallback(rcl_timer_t* timer, int64_t last_call_time)
@@ -53,22 +67,37 @@ void imuTimerCallback(rcl_timer_t* timer, int64_t last_call_time)
       imu_msg.header.stamp.nanosec = rmw_uros_epoch_nanos();
     }
 
-    // imu_msg.orientation.x = quat.x();
-    // imu_msg.orientation.y = quat.y();
-    // imu_msg.orientation.z = quat.z();
-    // imu_msg.orientation.w = quat.w();
+    imu_timer_event->notify();
+    imu_data_t imu_queue = imu_timer_event->getImuDataQueue();
 
-    // sensors_event_t* gyro = &angVelocityData;
-    // imu_msg.angular_velocity.x = gyro->gyro.x;
-    // imu_msg.angular_velocity.y = gyro->gyro.y;
-    // imu_msg.angular_velocity.z = gyro->gyro.z;
-
-    // sensors_event_t* acceleration = &linearAccelData;
-    // imu_msg.linear_acceleration.x = acceleration->acceleration.x;
-    // imu_msg.linear_acceleration.y = acceleration->acceleration.y;
-    // imu_msg.linear_acceleration.z = acceleration->acceleration.z;
+    imu_msg.orientation.x = imu_queue.orientation[0];
+    imu_msg.orientation.y = imu_queue.orientation[1];
+    imu_msg.orientation.z = imu_queue.orientation[2];
+    imu_msg.orientation.w = imu_queue.orientation[3];
+    imu_msg.angular_velocity.x = imu_queue.angular_velocity[0];
+    imu_msg.angular_velocity.y = imu_queue.angular_velocity[1];
+    imu_msg.angular_velocity.z = imu_queue.angular_velocity[2];
+    imu_msg.linear_acceleration.x = imu_queue.linear_acceleration[0];
+    imu_msg.linear_acceleration.y = imu_queue.linear_acceleration[1];
+    imu_msg.linear_acceleration.z = imu_queue.linear_acceleration[2];
 
     RCSOFTCHECK(rcl_publish(&imu_publisher, &imu_msg, NULL));
+  }
+}
+
+void jointStateTimerCallback(rcl_timer_t* timer, int64_t last_call_time)
+{
+  RCLC_UNUSED(last_call_time);
+
+  if (timer != NULL) {
+    if (rmw_uros_epoch_synchronized()) {
+      joint_state_msg.header.stamp.sec = rmw_uros_epoch_millis() / 1000;
+      joint_state_msg.header.stamp.nanosec = rmw_uros_epoch_nanos();
+    }
+
+    joint_state_msg.position.data[0] = (double)left_motor_wheel.getEncPos();
+    joint_state_msg.position.data[1] = (double)right_motor_wheel.getEncPos();
+    RCSOFTCHECK(rcl_publish(&joint_state_publisher, &joint_state_msg, NULL));
   }
 }
 
@@ -90,7 +119,7 @@ void motorStateMsgInit(sensor_msgs__msg__JointState* arg_message)
 {
   static rosidl_runtime_c__String msg_name_tab[MOT_STATE_MSG_LEN];
   static double msg_data_tab[3][MOT_STATE_MSG_LEN];
-  char* frame_id = (char*)"wheel_joints_state";
+  char* frame_id = (char*)"wheel_joint_state";
 
   arg_message->position.data = msg_data_tab[0];
   arg_message->position.capacity = arg_message->position.size = MOT_STATE_MSG_LEN;

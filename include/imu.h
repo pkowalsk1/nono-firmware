@@ -1,32 +1,30 @@
-#ifndef IMU_H
-#define IMU_H
-
+#pragma once
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SPIDevice.h>
 #include <Adafruit_Sensor.h>
 #include <utility/imumaths.h>
 
-#include "u_ros_observers.h"
+#include "uros/observers.h"
 
-class ImuDriver : EventObserverInterface
+class ImuDriver : public EventObserverInterface<imu_data_t>
 {
 public:
   ImuDriver(int32_t sensorID, uint8_t address) : id{sensorID}, addr{address} {};
   ~ImuDriver() {}
 
-  bool init();                // TODO: update for obsv
-  imu_data_t get_imu_data();  // TODO: update for obsv
+  bool init();
 
 protected:
-  void update(ImuRosEvent& event)
-  {
-    event.setImuDataQueue(my_data_);
+  imu_data_t update() override
+  { 
+    return queryImuData();
   }
 
 private:
+  imu_data_t queryImuData();
+
   int32_t id;
   uint8_t addr;
-
   Adafruit_BNO055 bno = Adafruit_BNO055(id, addr);
 
   sensors_event_t orientation_data_;
@@ -37,9 +35,4 @@ private:
   sensors_event_t gravity_data_;
 
   imu::Quaternion quat;
-
-  // TODO: temp
-  imu_data_t my_data_;
 };
-
-#endif /* IMU_H */

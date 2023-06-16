@@ -12,7 +12,7 @@ bool ImuDriver::init()
   return true;
 }
 
-imu_data_t ImuDriver::get_imu_data()
+imu_data_t ImuDriver::queryImuData()
 {
   bno.getEvent(&ang_velocity_data_, Adafruit_BNO055::VECTOR_GYROSCOPE);
   bno.getEvent(&linear_accel_data_, Adafruit_BNO055::VECTOR_LINEARACCEL);

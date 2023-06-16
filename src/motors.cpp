@@ -20,10 +20,13 @@ void WheelMotorDriver::readEncoder()
   }
 }
 
-
-
-// // ROS
-
-// /* motors */
-// motor_state_msg.position.data = motor_position;
-// RCSOFTCHECK(rcl_publish(&motor_state_publisher, &motor_state_msg, NULL));
+void WheelMotorDriver::setSpeed(int16_t speed)
+{
+  if (speed >= 0) {
+    analogWrite(pwm_a_, speed);
+    analogWrite(pwm_b_, 0);
+  } else {
+    analogWrite(pwm_a_, 0);
+    analogWrite(pwm_b_, -speed);
+  }
+}

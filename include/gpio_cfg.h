@@ -1,6 +1,4 @@
-#ifndef GPIO_CFG_H
-#define GPIO_CFG_H
-
+#pragma once
 #define M1_PWM_A 0
 #define M1_PWM_B 1
 #define M2_PWM_A 2
@@ -13,5 +11,3 @@
 #define M1_ENC_B 6
 #define M2_ENC_A 9
 #define M2_ENC_B 8
-
-#endif /* GPIO_CFG_H */
