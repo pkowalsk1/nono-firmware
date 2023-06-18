@@ -6,12 +6,12 @@
 #include "motors.h"
 #include "uros/u_ros_cfg.h"
 
-WheelMotorDriver left_motor_wheel = WheelMotorDriver(M1_PWM_A, M1_PWM_B, M1_ENC_A, M1_ENC_B);
-WheelMotorDriver right_motor_wheel = WheelMotorDriver(M2_PWM_A, M2_PWM_B, M2_ENC_A, M2_ENC_B);
+WheelMotorDriver left_motor_wheel = WheelMotorDriver(M1_PWM_A, M1_PWM_B, M1_ENC_A, M1_ENC_B, M1_DEFAULT_DIR);
+WheelMotorDriver right_motor_wheel = WheelMotorDriver(M2_PWM_A, M2_PWM_B, M2_ENC_A, M2_ENC_B, M2_DEFAULT_DIR);
 ImuDriver imu_bno = ImuDriver(55, 0x29);
 
 extern rclc_executor_t executor;
-extern ImuRosEvent *imu_timer_event;
+extern ImuRosEvent* imu_timer_event;
 
 void setup()
 {
@@ -45,13 +45,7 @@ void setup()
   delay(100);
 }
 
-float i = 0.0;
-
 void loop()
 {
-  i += 0.01;
-  left_motor_wheel.setSpeed((int)i);
-  right_motor_wheel.setSpeed(-(int)i);
-
   RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)));
 }

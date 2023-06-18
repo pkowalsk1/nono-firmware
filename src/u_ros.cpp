@@ -1,5 +1,5 @@
-#include "uros/u_ros_cfg.h"
 #include "motors.h"
+#include "uros/u_ros_cfg.h"
 
 rcl_publisher_t imu_publisher;
 rcl_publisher_t joint_state_publisher;
@@ -95,8 +95,12 @@ void jointStateTimerCallback(rcl_timer_t* timer, int64_t last_call_time)
       joint_state_msg.header.stamp.nanosec = rmw_uros_epoch_nanos();
     }
 
-    joint_state_msg.position.data[0] = (double)left_motor_wheel.getEncPos();
-    joint_state_msg.position.data[1] = (double)right_motor_wheel.getEncPos();
+    joint_state_msg.header.stamp.sec = time_us_64() / (int64_t)1e6;
+
+    joint_state_msg.position.data[0] = left_motor_wheel.angPoseUpdate();
+    joint_state_msg.position.data[1] = right_motor_wheel.angPoseUpdate();
+    joint_state_msg.velocity.data[0] = left_motor_wheel.angVelUpdate();
+    joint_state_msg.velocity.data[1] = right_motor_wheel.angVelUpdate();
     RCSOFTCHECK(rcl_publish(&joint_state_publisher, &joint_state_msg, NULL));
   }
 }

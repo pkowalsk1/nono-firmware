@@ -15,8 +15,8 @@
 #define NODE_NAMESPACE "nono"
 #define MOT_STATE_MSG_LEN 2
 
-#define IMU_TIMER_FREQ 50     // Hz
-#define JOINT_TIMER_FREQ 50  // hZ
+#define IMU_TIMER_FREQ 50    // Hz
+#define JOINT_TIMER_FREQ 70  // HZ
 
 #define RCCHECK(fn)                \
   {                                \
