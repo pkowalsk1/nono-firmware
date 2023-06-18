@@ -33,19 +33,19 @@ public:
   {
     if (obsvs_.empty()) return;
     for (size_t i = 0; i < obsvs_.size(); i++) {
-      data_queue_[i] = obsvs_[i]->update();
+      obsvs_[i]->update(data_queue_[i]);
     }
   };
 };
 
-// class JointControlRosEvent : public RosEventInterface<joint_data_t>
-// {
-// public:
-//   void notify() override
-//   {
-//     if (obsvs_.empty()) return;
-//     for (size_t i = 0; i < obsvs_.size(); i++) {
-//       data_queue_[i] = obsvs_[i]->update();
-//     }
-//   };
-// };
+class JointControlRosEvent : public RosEventInterface<joint_data_t>
+{
+public:
+  void notify() override
+  {
+    if (obsvs_.empty()) return;
+    for (size_t i = 0; i < obsvs_.size(); i++) {
+      obsvs_[i]->update(data_queue_[i]);
+    }
+  };
+};

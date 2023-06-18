@@ -10,14 +10,14 @@ class ImuDriver : public EventObserverInterface<imu_data_t>
 {
 public:
   ImuDriver(int32_t sensorID, uint8_t address) : id{sensorID}, addr{address} {};
-  ~ImuDriver() {}
+  ~ImuDriver() {} 
 
   bool init();
 
 protected:
-  imu_data_t update() override
+  void update(imu_data_t &data_queue) override
   { 
-    return queryImuData();
+    data_queue = queryImuData();
   }
 
 private:

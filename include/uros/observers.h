@@ -1,7 +1,5 @@
 #pragma once
-#include <list>
 
-// data buckets
 typedef struct
 {
   float orientation[4];
@@ -13,10 +11,9 @@ typedef struct
 {
   double actual_ang_pose[2];
   double actual_ang_vel[2];
-  uint64_t last_cmd_req_time; 
+  uint64_t last_cmd_req_time;
 } joint_data_t;
 
-// observers
 template <typename DataQueueType>
 class EventObserverInterface
 {
@@ -26,5 +23,5 @@ public:
   friend class JointControlRosEvent;
 
 protected:
-  virtual DataQueueType update() = 0;
+  virtual void update(DataQueueType& data_queue) = 0;
 };
