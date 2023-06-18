@@ -8,6 +8,7 @@
 
 #include <sensor_msgs/msg/imu.h>
 #include <sensor_msgs/msg/joint_state.h>
+#include <std_msgs/msg/float32_multi_array.h>
 
 #include "uros/subjects.h"
 
@@ -34,9 +35,11 @@
 
 void uRosCreateEntities();
 void imuTimerCallback(rcl_timer_t* timer, int64_t last_call_time);
-void jointStateTimerCallback(rcl_timer_t* timer, int64_t last_call_time);
+void jointStatesTimerCallback(rcl_timer_t* timer, int64_t last_call_time);
 void imuMsgInit(sensor_msgs__msg__Imu* arg_message);
-void motorStateMsgInit(sensor_msgs__msg__JointState* arg_message);
+void jointStatesMsgInit(sensor_msgs__msg__JointState * arg_message);
+void motorsCmdCallback(const void* arg_input_message);
+void motorStateMsgInit(std_msgs__msg__Float32MultiArray* arg_message);
 
 /**
   TODO: add description.

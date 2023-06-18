@@ -11,8 +11,10 @@ typedef struct
 
 typedef struct
 {
-  float pose[3];  // TODO:
-} odom_data_t;
+  double actual_ang_pose[2];
+  double actual_ang_vel[2];
+  uint64_t last_cmd_req_time; 
+} joint_data_t;
 
 // observers
 template <typename DataQueueType>
@@ -21,6 +23,7 @@ class EventObserverInterface
 public:
   virtual ~EventObserverInterface() {}
   friend class ImuRosEvent;
+  friend class JointControlRosEvent;
 
 protected:
   virtual DataQueueType update() = 0;
