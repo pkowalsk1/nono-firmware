@@ -13,12 +13,16 @@ public:
   {
     obsvs_.push_back(obsv);
     data_queue_.resize(obsvs_.size());
-  };
+  }
   virtual void notify() = 0;
 
   std::vector<DataQueueType> getDataQueue()
   {
     return data_queue_;
+  }
+  void setDataQueue(const DataQueueType& data_queue)
+  {
+    data_queue_ = data_queue;
   }
 
 protected:
@@ -35,10 +39,10 @@ public:
     for (size_t i = 0; i < obsvs_.size(); i++) {
       obsvs_[i]->update(data_queue_[i]);
     }
-  };
+  }
 };
 
-class JointControlRosEvent : public RosEventInterface<joint_data_t>
+class JointPubRosEvent : public RosEventInterface<joint_states_data_t>
 {
 public:
   void notify() override
@@ -47,5 +51,5 @@ public:
     for (size_t i = 0; i < obsvs_.size(); i++) {
       obsvs_[i]->update(data_queue_[i]);
     }
-  };
+  }
 };

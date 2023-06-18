@@ -23,8 +23,7 @@ rcl_allocator_t allocator;
 rcl_node_t node;
 
 ImuRosEvent* imu_timer_event = new ImuRosEvent();
-extern WheelMotorDriver left_motor_wheel;
-extern WheelMotorDriver right_motor_wheel;
+JointPubRosEvent* joint_timer_event = new JointPubRosEvent();
 
 void uRosCreateEntities()
 {
@@ -62,7 +61,8 @@ void uRosCreateEntities()
   ros_handles_cnt++;
 
   RCCHECK(rclc_timer_init_default(
-    &joint_states_timer, &support, RCL_MS_TO_NS(1000 / JOINT_TIMER_FREQ), jointStatesTimerCallback));
+    &joint_states_timer, &support, RCL_MS_TO_NS(1000 / JOINT_TIMER_FREQ),
+    jointStatesTimerCallback));
   ros_handles_cnt++;
 
   // create executor
@@ -120,10 +120,14 @@ void jointStatesTimerCallback(rcl_timer_t* timer, int64_t last_call_time)
       joint_states_msg.header.stamp.nanosec = u_sec % (int64_t)1e6;
     }
 
-    joint_states_msg.position.data[0] = left_motor_wheel.angPoseUpdate();
-    joint_states_msg.position.data[1] = right_motor_wheel.angPoseUpdate();
-    joint_states_msg.velocity.data[0] = left_motor_wheel.angVelUpdate();
-    joint_states_msg.velocity.data[1] = right_motor_wheel.angVelUpdate();
+    joint_timer_event->notify();
+    std::vector<joint_states_data_t> joint_states_queue = joint_timer_event->getDataQueue();
+
+    for (size_t i = 0; i < joint_states_queue.size(); i++) {
+      joint_states_msg.position.data[i] = joint_states_queue[i].actual_ang_pose;
+      joint_states_msg.velocity.data[i] = joint_states_queue[i].actual_ang_vel;
+    }
+
     RCSOFTCHECK(rcl_publish(&joint_states_publisher, &joint_states_msg, NULL));
   }
 }
@@ -135,10 +139,10 @@ void motorsCmdCallback(const void* arg_input_message)
 
   if (setpoint_msg->data.size == 2) {
     double left_wheel_setpoint = (double)setpoint_msg->data.data[0];
-    left_motor_wheel.setSpeed(left_wheel_setpoint);
+    // left_motor_wheel.setSpeed(left_wheel_setpoint);
 
     double right_wheel_setpoint = (double)setpoint_msg->data.data[1];
-    right_motor_wheel.setSpeed(right_wheel_setpoint);
+    // right_motor_wheel.setSpeed(right_wheel_setpoint);
   }
 }
 
@@ -183,8 +187,9 @@ void jointStatesMsgInit(sensor_msgs__msg__JointState* arg_message)
   arg_message->name.data = msg_name_tab;
 }
 
-void motorStateMsgInit(std_msgs__msg__Float32MultiArray* arg_message){
-  static float data[2] = {0,0};
+void motorStateMsgInit(std_msgs__msg__Float32MultiArray* arg_message)
+{
+  static float data[2] = {0, 0};
   arg_message->data.capacity = 2;
   arg_message->data.size = 2;
   arg_message->data.data = (float*)data;

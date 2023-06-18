@@ -2,8 +2,9 @@
 #include <Arduino.h>
 #include <time.h>
 
-// #include "uros/observers.h"
+#include "uros/observers.h"
 
+#define CMD_VEL_TIMEOUT_S 0.1
 #define M1_DEFAULT_DIR 1  // -1 (CW) or 1 (CCW)
 #define M2_DEFAULT_DIR -1
 
@@ -11,19 +12,24 @@
 #define GEARBOX_RATIO 7.5
 #define TICK_PER_2PI_RAD ((ENC_RESOLUTION * GEARBOX_RATIO) / (2 * PI))
 
-class WheelMotorDriver  // : public EventObserverInterface<odom_data_t>
+class WheelMotorDriver : public EventObserverInterface<joint_states_data_t>
 {
 public:
   WheelMotorDriver(
     pin_size_t pwm_a_pin, pin_size_t pwm_b_pin, pin_size_t enc_a_pin, pin_size_t enc_b_pin,
-    int8_t default_direction);
+    int8_t default_direction, uint8_t observer_id);
+  ~WheelMotorDriver() {}
 
   void readEncoder();
+
+protected:
+  void update(joint_states_data_t& data_queue) override;
+
+private:
   void setSpeed(int16_t speed);
   double angPoseUpdate();
   double angVelUpdate();
 
-private:
   pin_size_t pwm_a_;
   pin_size_t pwm_b_;
   pin_size_t enc_a_;
@@ -36,6 +42,8 @@ private:
 
   double ang_pose_;
   double ang_vel_;
+
+  uint8_t unique_observers_id_;
 };
 
 class VacuumMotorDriver

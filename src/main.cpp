@@ -6,12 +6,13 @@
 #include "motors.h"
 #include "uros/u_ros_cfg.h"
 
-WheelMotorDriver left_motor_wheel = WheelMotorDriver(M1_PWM_A, M1_PWM_B, M1_ENC_A, M1_ENC_B, M1_DEFAULT_DIR);
-WheelMotorDriver right_motor_wheel = WheelMotorDriver(M2_PWM_A, M2_PWM_B, M2_ENC_A, M2_ENC_B, M2_DEFAULT_DIR);
-ImuDriver imu_bno = ImuDriver(55, 0x29);
+WheelMotorDriver left_motor_wheel(M1_PWM_A, M1_PWM_B, M1_ENC_A, M1_ENC_B, M1_DEFAULT_DIR, 0);
+WheelMotorDriver right_motor_wheel(M2_PWM_A, M2_PWM_B, M2_ENC_A, M2_ENC_B, M2_DEFAULT_DIR, 1);
+ImuDriver imu_bno(55, 0x29);
 
 extern rclc_executor_t executor;
 extern ImuRosEvent* imu_timer_event;
+extern JointPubRosEvent* joint_timer_event;
 
 void setup()
 {
@@ -37,6 +38,8 @@ void setup()
 
   // setup ros entities
   imu_timer_event->add(&imu_bno);
+  joint_timer_event->add(&left_motor_wheel);
+  joint_timer_event->add(&right_motor_wheel);
 
   uRosCreateEntities();
 

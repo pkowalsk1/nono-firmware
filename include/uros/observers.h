@@ -9,10 +9,9 @@ typedef struct
 
 typedef struct
 {
-  double actual_ang_pose[2];
-  double actual_ang_vel[2];
-  uint64_t last_cmd_req_time;
-} joint_data_t;
+  double actual_ang_pose;
+  double actual_ang_vel;
+} joint_states_data_t;
 
 template <typename DataQueueType>
 class EventObserverInterface
@@ -20,7 +19,7 @@ class EventObserverInterface
 public:
   virtual ~EventObserverInterface() {}
   friend class ImuRosEvent;
-  friend class JointControlRosEvent;
+  friend class JointPubRosEvent;
 
 protected:
   virtual void update(DataQueueType& data_queue) = 0;
