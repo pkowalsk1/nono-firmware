@@ -24,6 +24,7 @@ rcl_node_t node;
 
 ImuRosEvent* imu_timer_event = new ImuRosEvent();
 JointPubRosEvent* joint_timer_event = new JointPubRosEvent();
+MotorsCmdRosEvent* motors_cmd_event = new MotorsCmdRosEvent();
 
 void uRosCreateEntities()
 {
@@ -138,12 +139,11 @@ void motorsCmdCallback(const void* arg_input_message)
   setpoint_msg = (std_msgs__msg__Float32MultiArray*)arg_input_message;
 
   if (setpoint_msg->data.size == 2) {
-    double left_wheel_setpoint = (double)setpoint_msg->data.data[0];
-    // left_motor_wheel.setSpeed(left_wheel_setpoint);
-
-    double right_wheel_setpoint = (double)setpoint_msg->data.data[1];
-    // right_motor_wheel.setSpeed(right_wheel_setpoint);
+    std::vector<motors_cmd_data_t> motors_cmd_data{
+      setpoint_msg->data.data[0], setpoint_msg->data.data[1]};
+    motors_cmd_event->setDataQueue(motors_cmd_data);
   }
+  motors_cmd_event->notify();
 }
 
 void imuMsgInit(sensor_msgs__msg__Imu* arg_message)
@@ -199,8 +199,8 @@ void errorLoop()
 {
   while (1) {
     digitalWrite(LED_BUILTIN, HIGH);
-    delay(200);
+    delay(500);
     digitalWrite(LED_BUILTIN, LOW);
-    delay(200);
+    delay(500);
   }
 }

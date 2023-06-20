@@ -12,7 +12,8 @@
 #define GEARBOX_RATIO 7.5
 #define TICK_PER_2PI_RAD ((ENC_RESOLUTION * GEARBOX_RATIO) / (2 * PI))
 
-class WheelMotorDriver : public EventObserverInterface<joint_states_data_t>
+class WheelMotorDriver : public EventObserverInterface<joint_states_data_t>,
+                         public EventObserverInterface<motors_cmd_data_t>
 {
 public:
   WheelMotorDriver(
@@ -24,6 +25,7 @@ public:
 
 protected:
   void update(joint_states_data_t& data_queue) override;
+  void update(motors_cmd_data_t& data_queue) override;
 
 private:
   void setSpeed(int16_t speed);
@@ -38,7 +40,7 @@ private:
 
   int64_t actual_encoder_value_ = 0;
   int64_t last_encoder_value_ = 0;
-  int64_t vel_last_time_us_ = 0;
+  long vel_last_time_us_ = 0;
 
   double ang_pose_;
   double ang_vel_;

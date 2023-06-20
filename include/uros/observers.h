@@ -13,6 +13,8 @@ typedef struct
   double actual_ang_vel;
 } joint_states_data_t;
 
+typedef double motors_cmd_data_t;
+
 template <typename DataQueueType>
 class EventObserverInterface
 {
@@ -20,6 +22,7 @@ public:
   virtual ~EventObserverInterface() {}
   friend class ImuRosEvent;
   friend class JointPubRosEvent;
+  friend class MotorsCmdRosEvent;
 
 protected:
   virtual void update(DataQueueType& data_queue) = 0;

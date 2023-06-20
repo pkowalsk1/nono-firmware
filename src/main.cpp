@@ -13,6 +13,7 @@ ImuDriver imu_bno(55, 0x29);
 extern rclc_executor_t executor;
 extern ImuRosEvent* imu_timer_event;
 extern JointPubRosEvent* joint_timer_event;
+extern MotorsCmdRosEvent* motors_cmd_event;
 
 void setup()
 {
@@ -39,7 +40,9 @@ void setup()
   // setup ros entities
   imu_timer_event->add(&imu_bno);
   joint_timer_event->add(&left_motor_wheel);
+  motors_cmd_event->add(&left_motor_wheel);
   joint_timer_event->add(&right_motor_wheel);
+  motors_cmd_event->add(&right_motor_wheel);
 
   uRosCreateEntities();
 

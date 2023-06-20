@@ -20,7 +20,7 @@ public:
   {
     return data_queue_;
   }
-  void setDataQueue(const DataQueueType& data_queue)
+  void setDataQueue(const std::vector<DataQueueType>& data_queue)
   {
     data_queue_ = data_queue;
   }
@@ -43,6 +43,18 @@ public:
 };
 
 class JointPubRosEvent : public RosEventInterface<joint_states_data_t>
+{
+public:
+  void notify() override
+  {
+    if (obsvs_.empty()) return;
+    for (size_t i = 0; i < obsvs_.size(); i++) {
+      obsvs_[i]->update(data_queue_[i]);
+    }
+  }
+};
+
+class MotorsCmdRosEvent : public RosEventInterface<motors_cmd_data_t>
 {
 public:
   void notify() override
