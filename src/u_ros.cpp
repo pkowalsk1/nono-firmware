@@ -4,6 +4,7 @@
 /* ROS publishers */
 rcl_publisher_t imu_publisher;
 rcl_publisher_t joint_states_publisher;
+rcl_publisher_t debug_publisher;
 
 /* ROS subscribers */
 rcl_subscription_t motors_cmd_subscriber;
@@ -16,6 +17,7 @@ rcl_timer_t joint_states_timer;
 sensor_msgs__msg__Imu imu_msg;
 sensor_msgs__msg__JointState joint_states_msg;
 std_msgs__msg__Float32MultiArray motors_cmd_msg;
+std_msgs__msg__Float32MultiArray debug_msg;
 
 rclc_executor_t executor;
 rclc_support_t support;
@@ -25,6 +27,11 @@ rcl_node_t node;
 ImuRosEvent* imu_timer_event = new ImuRosEvent();
 JointPubRosEvent* joint_timer_event = new JointPubRosEvent();
 MotorsCmdRosEvent* motors_cmd_event = new MotorsCmdRosEvent();
+
+// Trash
+extern WheelMotorDriver left_motor_wheel;
+extern WheelMotorDriver right_motor_wheel;
+/////////
 
 void uRosCreateEntities()
 {
@@ -45,6 +52,13 @@ void uRosCreateEntities()
   RCCHECK(rclc_publisher_init_best_effort(
     &joint_states_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
     "joint_states"));
+
+  // ====================== Trash ====================== // 
+  RCCHECK(rclc_publisher_init_best_effort(
+    &debug_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray),
+    "_debug"));
+  motorStateMsgInit(&debug_msg);
+  // ====================== ----- ====================== // 
 
   imuMsgInit(&imu_msg);
   jointStatesMsgInit(&joint_states_msg);
@@ -130,6 +144,12 @@ void jointStatesTimerCallback(rcl_timer_t* timer, int64_t last_call_time)
     }
 
     RCSOFTCHECK(rcl_publish(&joint_states_publisher, &joint_states_msg, NULL));
+
+    // ====================== Trash ====================== // 
+    debug_msg.data.data[0] = left_motor_wheel.pid_out_;
+    debug_msg.data.data[1] = right_motor_wheel.pid_out_;
+    
+    RCSOFTCHECK(rcl_publish(&debug_publisher, &debug_msg, NULL));
   }
 }
 

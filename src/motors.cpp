@@ -15,39 +15,42 @@ void WheelMotorDriver::update(joint_states_data_t& data_queue)
 {
   data_queue.actual_ang_pose = angPoseUpdate();
   data_queue.actual_ang_vel = angVelUpdate();
+
+  pidControlLoop();
 }
 
 void WheelMotorDriver::update(motors_cmd_data_t& data_queue)
 {
-  setSpeed(data_queue * default_direction_);
+  set_point_ = data_queue;
+  last_cmd_update_time_ = micros();
 }
 
-void WheelMotorDriver::readEncoder()
+void WheelMotorDriver::pidControlLoop()
 {
-  int b = digitalRead(enc_b_);
+  if (micros() - last_cmd_update_time_ >= 0.1 * 1e6) {
+    set_point_ = 0;
+  } 
+  // else {
+  //   set_point_ *= (double)default_direction_;
+  // }
 
-  if (b > 0) {
-    actual_encoder_value_++;
-  } else {
-    actual_encoder_value_--;
-  }
-}
+  unsigned long current_time = micros();
+  unsigned long elapsed_time = current_time - pid_last_time_;
 
-void WheelMotorDriver::setSpeed(int16_t speed)
-{
-  if (speed >= 0) {
-    analogWrite(pwm_a_, 0);
-    analogWrite(pwm_b_, speed);
-  } else {
-    analogWrite(pwm_a_, -speed);
-    analogWrite(pwm_b_, 0);
-  }
-}
+  actual_error_ = (ang_vel_ - set_point_) * (double)default_direction_;
 
-double WheelMotorDriver::angPoseUpdate()
-{
-  ang_pose_ = actual_encoder_value_ / TICK_PER_2PI_RAD * default_direction_;
-  return ang_pose_;
+  double p_term = kp_gain_ * actual_error_;
+  double i_term = ki_gain_ * (error_sum_ + actual_error_);
+  double d_term = kd_gain_ * (actual_error_ - last_error_);
+
+  pid_out_ = p_term + i_term + d_term;
+  pid_out_ = constrain(pid_out_, -255, 255);
+
+  setSpeed(pid_out_);
+
+  last_error_ = actual_error_;
+  error_sum_ += actual_error_;
+  pid_last_time_ = current_time;
 }
 
 double WheelMotorDriver::angVelUpdate()
@@ -61,4 +64,34 @@ double WheelMotorDriver::angVelUpdate()
   last_encoder_value_ = actual_encoder_value_;
 
   return ang_vel_;
+}
+
+double WheelMotorDriver::angPoseUpdate()
+{
+  ang_pose_ = actual_encoder_value_ / TICK_PER_2PI_RAD * default_direction_;
+  return ang_pose_;
+}
+
+void WheelMotorDriver::setSpeed(int16_t speed)
+{
+  speed = constrain(speed, -255, 255);
+
+  if (speed >= 0) {
+    analogWrite(pwm_a_, speed);
+    analogWrite(pwm_b_, 0);
+  } else {
+    analogWrite(pwm_a_, 0);
+    analogWrite(pwm_b_, -speed);
+  }
+}
+
+void WheelMotorDriver::readEncoder()
+{
+  int b = digitalRead(enc_b_);
+
+  if (b > 0) {
+    actual_encoder_value_++;
+  } else {
+    actual_encoder_value_--;
+  }
 }
