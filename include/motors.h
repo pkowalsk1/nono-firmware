@@ -48,6 +48,7 @@ private:
   double ang_vel_enc_cnt_based_;
   double ang_vel_enc_dt_based_;
   double min_ang_vel_ = 0.1;
+  double max_ang_vel = 35.0;
 
   const double kp_gain_ = 4.0;
   const double ki_gain_ = 2.5;
