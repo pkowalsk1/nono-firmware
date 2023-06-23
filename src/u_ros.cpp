@@ -1,4 +1,3 @@
-#include "motors.h"
 #include "uros/u_ros_cfg.h"
 
 /* ROS publishers */
@@ -27,11 +26,6 @@ rcl_node_t node;
 ImuRosEvent* imu_timer_event = new ImuRosEvent();
 JointPubRosEvent* joint_timer_event = new JointPubRosEvent();
 MotorsCmdRosEvent* motors_cmd_event = new MotorsCmdRosEvent();
-
-// Trash
-extern WheelMotorDriver left_motor_wheel;
-extern WheelMotorDriver right_motor_wheel;
-/////////
 
 void uRosCreateEntities()
 {
@@ -144,12 +138,6 @@ void jointStatesTimerCallback(rcl_timer_t* timer, int64_t last_call_time)
     }
 
     RCSOFTCHECK(rcl_publish(&joint_states_publisher, &joint_states_msg, NULL));
-
-    // ====================== Trash ====================== // 
-    debug_msg.data.data[0] = left_motor_wheel.pid_out_;
-    debug_msg.data.data[1] = right_motor_wheel.pid_out_;
-    
-    RCSOFTCHECK(rcl_publish(&debug_publisher, &debug_msg, NULL));
   }
 }
 

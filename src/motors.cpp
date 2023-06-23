@@ -22,46 +22,51 @@ void WheelMotorDriver::update(joint_states_data_t& data_queue)
 void WheelMotorDriver::update(motors_cmd_data_t& data_queue)
 {
   set_point_ = data_queue;
-  last_cmd_update_time_ = micros();
+  cmd_update_last_time_ = micros();
 }
 
 void WheelMotorDriver::pidControlLoop()
 {
-  if (micros() - last_cmd_update_time_ >= 0.1 * 1e6) {
+  if (micros() - cmd_update_last_time_ >= 0.1 * 1e6) {
     set_point_ = 0;
-  } 
-  // else {
-  //   set_point_ *= (double)default_direction_;
-  // }
+  }
+  set_point_ = constrain(set_point_ ,-max_ang_vel, max_ang_vel);
 
-  unsigned long current_time = micros();
-  unsigned long elapsed_time = current_time - pid_last_time_;
+  const double actual_error_ = (ang_vel_ - set_point_) * (double)default_direction_;
 
-  actual_error_ = (ang_vel_ - set_point_) * (double)default_direction_;
+  const double p_term = kp_gain_ * actual_error_;
+  const double i_term = ki_gain_ * (error_sum_ + actual_error_);
+  const double d_term = kd_gain_ * (actual_error_ - last_error_);
 
-  double p_term = kp_gain_ * actual_error_;
-  double i_term = ki_gain_ * (error_sum_ + actual_error_);
-  double d_term = kd_gain_ * (actual_error_ - last_error_);
+  double pid_out_ = p_term + i_term + d_term;
 
-  pid_out_ = p_term + i_term + d_term;
-  pid_out_ = constrain(pid_out_, -255, 255);
+  if (pid_out_ < min_pwm_ && pid_out_ > -min_pwm_) {
+    pid_out_ = (int16_t)0;
+  } else {
+    pid_out_ = (int16_t)constrain(pid_out_, -255, 255);
+  }
 
   setSpeed(pid_out_);
 
   last_error_ = actual_error_;
   error_sum_ += actual_error_;
-  pid_last_time_ = current_time;
 }
 
 double WheelMotorDriver::angVelUpdate()
 {
-  long time_now_us = micros();
-  float dt = ((float)(time_now_us - vel_last_time_us_)) / (1.0e6);
-  ang_vel_ =
+  long time_now = micros();
+  float dt = ((float)(time_now - vel_last_time_)) / (1.0e6);
+  ang_vel_enc_cnt_based_ =
     (actual_encoder_value_ - last_encoder_value_) / (TICK_PER_2PI_RAD * dt) * default_direction_;
 
-  vel_last_time_us_ = time_now_us;
+  vel_last_time_ = time_now;
   last_encoder_value_ = actual_encoder_value_;
+
+  if (ang_vel_enc_cnt_based_ < min_ang_vel_ && ang_vel_enc_cnt_based_ > -min_ang_vel_) {
+    ang_vel_ = 0;
+  } else {
+    ang_vel_ = ang_vel_enc_dt_based_;
+  }
 
   return ang_vel_;
 }
@@ -89,9 +94,17 @@ void WheelMotorDriver::readEncoder()
 {
   int b = digitalRead(enc_b_);
 
+  unsigned long time_now = micros();
+  double dt = (time_now - encoder_change_last_time_) / 1e6;
+
+  ang_vel_enc_dt_based_ = 1 / (TICK_PER_2PI_RAD * dt) * default_direction_;
+
   if (b > 0) {
     actual_encoder_value_++;
   } else {
     actual_encoder_value_--;
+    ang_vel_enc_dt_based_ *= -1; // TODO: it sucks
   }
+
+  encoder_change_last_time_ = time_now;
 }

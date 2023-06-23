@@ -23,7 +23,6 @@ public:
 
   void readEncoder();
 
-  double pid_out_ = 0.0;
 protected:
   void update(joint_states_data_t& data_queue) override;
   void update(motors_cmd_data_t& data_queue) override;
@@ -42,23 +41,24 @@ private:
 
   int64_t actual_encoder_value_ = 0;
   int64_t last_encoder_value_ = 0;
-  long vel_last_time_us_ = 0;
 
+  double set_point_;
   double ang_pose_;
   double ang_vel_;
-  double set_point_;
-  unsigned long last_cmd_update_time_;
+  double ang_vel_enc_cnt_based_;
+  double ang_vel_enc_dt_based_;
+  double min_ang_vel_ = 0.1;
 
-  double kp_gain_ = 4.0;
-  double ki_gain_ = 2.5;
-  double kd_gain_ = 2.0;
-  double last_ang_vel_ = 0.0;
-  double actual_error_ = 0.0;
+  const double kp_gain_ = 4.0;
+  const double ki_gain_ = 2.5;
+  const double kd_gain_ = 2.0;
   double last_error_ = 0.0;
-  double max_error_sum_ = 1.0 / ki_gain_;
-  double error_sum_ = 0;
-  
-  long pid_last_time_ = 0;
+  double error_sum_ = 0.0;
+  int min_pwm_ = 7;
+
+  unsigned long encoder_change_last_time_ = 0;
+  unsigned long vel_last_time_ = 0;
+  unsigned long cmd_update_last_time_;
 
   uint8_t unique_observers_id_;
 };
