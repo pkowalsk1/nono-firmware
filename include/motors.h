@@ -5,8 +5,8 @@
 #include "uros/observers.h"
 
 #define CMD_VEL_TIMEOUT_S 0.1
-#define M1_DEFAULT_DIR -1  // -1 (CW) or 1 (CCW)
-#define M2_DEFAULT_DIR 1
+#define M1_DEFAULT_DIR 1  // -1 (CW) or 1 (CCW)
+#define M2_DEFAULT_DIR -1
 
 #define ENC_RESOLUTION 64
 #define GEARBOX_RATIO 7.5
