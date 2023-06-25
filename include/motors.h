@@ -4,13 +4,23 @@
 
 #include "uros/observers.h"
 
-#define CMD_VEL_TIMEOUT_S 0.1
-#define M1_DEFAULT_DIR 1  // -1 (CW) or 1 (CCW)
-#define M2_DEFAULT_DIR -1
+static const int8_t m1_default_dir = 1;  // -1 (CW) or 1 (CCW)
+static const int8_t m2_default_dir = -1;
 
-#define ENC_RESOLUTION 64
-#define GEARBOX_RATIO 7.5
-#define TICK_PER_2PI_RAD ((ENC_RESOLUTION * GEARBOX_RATIO) / (2 * PI))
+static const double cmd_vel_timeout = 0.1;
+static const double min_ang_vel = 0.1;
+static const double max_ang_vel = 35.0;
+static const uint16_t min_pwm = 7;
+
+static const uint16_t enc_resolution = 64;
+static const double gearbox_ration = 7.5;
+static const double tick_per_2pi_rad = ((enc_resolution * gearbox_ration) / (2 * PI));
+
+static const double kp_gain = 4.0;
+static const double ki_gain = 2.5;
+static const double kd_gain = 2.0;
+static const double vel_filter_coeff_a = 0.7767416;
+static const double vel_filter_coeff_b = 0.1116292;
 
 class WheelMotorDriver : public EventObserverInterface<joint_states_data_t>,
                          public EventObserverInterface<motors_cmd_data_t>
@@ -18,7 +28,7 @@ class WheelMotorDriver : public EventObserverInterface<joint_states_data_t>,
 public:
   WheelMotorDriver(
     pin_size_t pwm_a_pin, pin_size_t pwm_b_pin, pin_size_t enc_a_pin, pin_size_t enc_b_pin,
-    int8_t default_direction, uint8_t observer_id);
+    int8_t default_direction);
   ~WheelMotorDriver() {}
 
   void readEncoder();
@@ -45,23 +55,17 @@ private:
   double set_point_;
   double ang_pose_;
   double ang_vel_;
+  double ang_vel_filtered_;
   double ang_vel_enc_cnt_based_;
   double ang_vel_enc_dt_based_;
-  double min_ang_vel_ = 0.1;
-  double max_ang_vel = 35.0;
+  double ang_vel_prev_ = 0.0;
 
-  const double kp_gain_ = 4.0;
-  const double ki_gain_ = 2.5;
-  const double kd_gain_ = 2.0;
   double last_error_ = 0.0;
   double error_sum_ = 0.0;
-  int min_pwm_ = 7;
 
   unsigned long encoder_change_last_time_ = 0;
   unsigned long vel_last_time_ = 0;
   unsigned long cmd_update_last_time_;
-
-  uint8_t unique_observers_id_;
 };
 
 class VacuumMotorDriver
