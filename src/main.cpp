@@ -33,7 +33,9 @@ void setup()
   attachInterrupt(
     digitalPinToInterrupt(M2_ENC_A), []() { right_motor_wheel.readEncoder(); }, RISING);
 
-  Serial.begin(115200);
+  Serial1.begin(576000);
+  while (!Serial1)
+    ;
 
   imu_bno.init();
 
@@ -53,5 +55,5 @@ void setup()
 
 void loop()
 {
-  RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100)));
+  RCSOFTCHECK(rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10)));
 }

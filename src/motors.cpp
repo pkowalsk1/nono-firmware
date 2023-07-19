@@ -1,5 +1,4 @@
 #include "motors.h"
-#include <cmath>
 
 WheelMotorDriver::WheelMotorDriver(
   pin_size_t pwm_a_pin, pin_size_t pwm_b_pin, pin_size_t enc_a_pin, pin_size_t enc_b_pin,

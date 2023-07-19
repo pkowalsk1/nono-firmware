@@ -1,3 +1,4 @@
+#include "pico_transport.h"
 #include "uros/u_ros_cfg.h"
 
 /* ROS publishers */
@@ -31,7 +32,12 @@ void uRosCreateEntities()
 {
   size_t ros_handles_cnt = 0;
 
-  set_microros_serial_transports(Serial);
+  // TODO:
+  // rmw_uros_set_custom_transport(
+  //   true, NULL, pico_transport_open, pico_transport_close, pico_transport_write,
+  //   pico_transport_read);
+
+  set_microros_serial_transports(Serial1);
   delay(2000);
 
   allocator = rcl_get_default_allocator();
@@ -46,13 +52,6 @@ void uRosCreateEntities()
   RCCHECK(rclc_publisher_init_best_effort(
     &joint_states_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(sensor_msgs, msg, JointState),
     "joint_states"));
-
-  // ====================== Trash ====================== // 
-  RCCHECK(rclc_publisher_init_best_effort(
-    &debug_publisher, &node, ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Float32MultiArray),
-    "_debug"));
-  motorStateMsgInit(&debug_msg);
-  // ====================== ----- ====================== // 
 
   imuMsgInit(&imu_msg);
   jointStatesMsgInit(&joint_states_msg);
