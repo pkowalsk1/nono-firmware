@@ -11,3 +11,6 @@
 #define M1_ENC_B 6
 #define M2_ENC_A 9
 #define M2_ENC_B 8
+
+#define UROS_SERIAL_TX 12
+#define UROS_SERIAL_RX 13
