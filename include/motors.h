@@ -5,6 +5,7 @@
 
 #include "uros/observers.h"
 
+// TODO: static constexpr
 static const int8_t m1_default_dir = 1;  // -1 (CW) or 1 (CCW)
 static const int8_t m2_default_dir = -1;
 

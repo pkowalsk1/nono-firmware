@@ -1,4 +1,4 @@
-#include "pico_transport.h"
+// #include "pico_transport.h"
 #include "uros/u_ros_cfg.h"
 
 /* ROS publishers */
@@ -28,16 +28,11 @@ ImuRosEvent* imu_timer_event = new ImuRosEvent();
 JointPubRosEvent* joint_timer_event = new JointPubRosEvent();
 MotorsCmdRosEvent* motors_cmd_event = new MotorsCmdRosEvent();
 
-void uRosCreateEntities()
+void uRosCreateEntities(UART& stream)
 {
   size_t ros_handles_cnt = 0;
 
-  // TODO:
-  // rmw_uros_set_custom_transport(
-  //   true, NULL, pico_transport_open, pico_transport_close, pico_transport_write,
-  //   pico_transport_read);
-
-  set_microros_serial_transports(Serial1);
+  set_microros_serial_transports(stream);
   delay(2000);
 
   allocator = rcl_get_default_allocator();

@@ -33,7 +33,7 @@
     }                              \
   }
 
-void uRosCreateEntities();
+void uRosCreateEntities(UART& stream);
 void imuTimerCallback(rcl_timer_t* timer, int64_t last_call_time);
 void jointStatesTimerCallback(rcl_timer_t* timer, int64_t last_call_time);
 void imuMsgInit(sensor_msgs__msg__Imu* arg_message);
