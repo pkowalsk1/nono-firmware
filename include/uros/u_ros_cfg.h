@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include <micro_ros_platformio.h>
+#include <micro_ros_utilities/string_utilities.h>
 
 #include <rcl/rcl.h>
 #include <rclc/executor.h>
@@ -26,6 +27,7 @@
       errorLoop();                 \
     }                              \
   }
+
 #define RCSOFTCHECK(fn)            \
   {                                \
     rcl_ret_t temp_rc = fn;        \
@@ -33,11 +35,24 @@
     }                              \
   }
 
-void uRosCreateEntities(UART& stream);
+#define EXECUTE_EVERY_N_MS(MS, X)      \
+  do {                                 \
+    static volatile int64_t init = -1; \
+    if (init == -1) {                  \
+      init = uxr_millis();             \
+    }                                  \
+    if (uxr_millis() - init > MS) {    \
+      X;                               \
+      init = uxr_millis();             \
+    }                                  \
+  } while (0)
+
+bool uRosCreateEntities();
+bool uRosDestroyEntities();
 void imuTimerCallback(rcl_timer_t* timer, int64_t last_call_time);
 void jointStatesTimerCallback(rcl_timer_t* timer, int64_t last_call_time);
 void imuMsgInit(sensor_msgs__msg__Imu* arg_message);
-void jointStatesMsgInit(sensor_msgs__msg__JointState * arg_message);
+void jointStatesMsgInit(sensor_msgs__msg__JointState* arg_message);
 void motorsCmdCallback(const void* arg_input_message);
 void motorStateMsgInit(std_msgs__msg__Float32MultiArray* arg_message);
 

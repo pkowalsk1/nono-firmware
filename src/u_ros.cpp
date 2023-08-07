@@ -1,10 +1,8 @@
-// #include "pico_transport.h"
 #include "uros/u_ros_cfg.h"
 
 /* ROS publishers */
 rcl_publisher_t imu_publisher;
 rcl_publisher_t joint_states_publisher;
-rcl_publisher_t debug_publisher;
 
 /* ROS subscribers */
 rcl_subscription_t motors_cmd_subscriber;
@@ -17,7 +15,6 @@ rcl_timer_t joint_states_timer;
 sensor_msgs__msg__Imu imu_msg;
 sensor_msgs__msg__JointState joint_states_msg;
 std_msgs__msg__Float32MultiArray motors_cmd_msg;
-std_msgs__msg__Float32MultiArray debug_msg;
 
 rclc_executor_t executor;
 rclc_support_t support;
@@ -28,12 +25,9 @@ ImuRosEvent* imu_timer_event = new ImuRosEvent();
 JointPubRosEvent* joint_timer_event = new JointPubRosEvent();
 MotorsCmdRosEvent* motors_cmd_event = new MotorsCmdRosEvent();
 
-void uRosCreateEntities(UART& stream)
+bool uRosCreateEntities()
 {
   size_t ros_handles_cnt = 0;
-
-  set_microros_serial_transports(stream);
-  delay(2000);
 
   allocator = rcl_get_default_allocator();
 
@@ -74,6 +68,26 @@ void uRosCreateEntities(UART& stream)
   RCCHECK(rclc_executor_add_timer(&executor, &joint_states_timer));
   RCCHECK(rclc_executor_add_subscription(
     &executor, &motors_cmd_subscriber, &motors_cmd_msg, &motorsCmdCallback, ON_NEW_DATA));
+
+  return true;
+}
+
+bool uRosDestroyEntities()
+{
+  rmw_context_t* rmw_context = rcl_context_get_rmw_context(&support.context);
+  (void)rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
+
+  micro_ros_string_utilities_destroy(&joint_states_msg.header.frame_id);
+
+  RCSOFTCHECK(rcl_publisher_fini(&joint_states_publisher, &node));
+  RCSOFTCHECK(rcl_publisher_fini(&imu_publisher, &node));
+  RCSOFTCHECK(rcl_timer_fini(&imu_timer));
+  RCSOFTCHECK(rcl_timer_fini(&joint_states_timer));
+  RCSOFTCHECK(rclc_executor_fini(&executor));
+  RCSOFTCHECK(rcl_node_fini(&node));
+  RCSOFTCHECK(rclc_support_fini(&support));
+
+  return true;
 }
 
 void imuTimerCallback(rcl_timer_t* timer, int64_t last_call_time)
