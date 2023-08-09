@@ -44,7 +44,8 @@ const PinModeInfo pin_map_gpio[] = {
   {RPI_RUN, INPUT},
   {RPI_G_EN, OUTPUT},
   {VACUUM_EN, OUTPUT},
-  // {POWER_BTN, INPUT_PULLUP}, 
+  // it doesn't work with pinMode and interrupt attached, but POWER_BTN pin is pulled up anyway
+  // {POWER_BTN, INPUT_PULLUP},  
 };
 
 const PinFncInfo pin_map_fnc_gpio[] = { 
