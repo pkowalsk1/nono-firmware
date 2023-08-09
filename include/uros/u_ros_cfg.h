@@ -47,6 +47,14 @@
     }                                  \
   } while (0)
 
+enum uros_state_t
+{
+  WAITING_AGENT,
+  AGENT_AVAILABLE,
+  AGENT_CONNECTED,
+  AGENT_DISCONNECTED
+};
+
 bool uRosCreateEntities();
 bool uRosDestroyEntities();
 void imuTimerCallback(rcl_timer_t* timer, int64_t last_call_time);
