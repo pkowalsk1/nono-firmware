@@ -12,17 +12,15 @@ MicroROSWrapper * MicroROSWrapper::getInstance()
   return instance_;
 }
 
-bool MicroROSWrapper::init(arduino::UART & uros_serial)
+void MicroROSWrapper::init(arduino::UART & uros_serial)
 {
   uros_serial_ = &uros_serial;
 
   set_microros_serial_transports(*uros_serial_);
   delay(2000);
-
-  return true;
 }
 
-bool MicroROSWrapper::activate()
+void MicroROSWrapper::activate()
 {
   size_t ros_handles_cnt = 0;
 
@@ -55,7 +53,6 @@ bool MicroROSWrapper::activate()
     &MicroROSWrapper::jointStateTimerCallback));
   ros_handles_cnt++;
 
-  // create executor
   RCCHECK(rclc_executor_init(&executor_, &support_.context, ros_handles_cnt, &allocator_));
   RCCHECK(rclc_executor_add_timer(&executor_, &imu_timer_));
   RCCHECK(rclc_executor_add_timer(&executor_, &joint_state_timer_));
@@ -68,11 +65,9 @@ bool MicroROSWrapper::activate()
   }
 
   connection_state_ = AGENT_CONNECTED;
-
-  return connection_state_;
 }
 
-bool MicroROSWrapper::deactivate()
+void MicroROSWrapper::deactivate()
 {
   rmw_context_t * rmw_context = rcl_context_get_rmw_context(&support_.context);
   (void)rmw_uros_set_context_entity_destroy_session_timeout(rmw_context, 0);
@@ -93,42 +88,26 @@ bool MicroROSWrapper::deactivate()
   RCSOFTCHECK(rclc_support_fini(&support_));
 
   connection_state_ = WAITING_AGENT;
-
-  return true;
 }
 
 uros_state_t MicroROSWrapper::evaluateConnectionState()
 {
   const bool res = (RMW_RET_OK == rmw_uros_ping_agent(100, 1));
 
-  if (res) {
-    if (connection_state_ == WAITING_AGENT) {
-      connection_state_ = AGENT_AVAILABLE;
-    } else {
-      connection_state_ = AGENT_CONNECTED;
-    }
-  } else {
-    if (connection_state_ == AGENT_CONNECTED) {
-      connection_state_ = AGENT_DISCONNECTED;
-    } else {
-      connection_state_ = WAITING_AGENT;
-    }
-  }
+  connection_state_ =
+    res ? (connection_state_ == WAITING_AGENT ? AGENT_AVAILABLE : AGENT_CONNECTED)
+        : (connection_state_ == AGENT_CONNECTED ? AGENT_DISCONNECTED : WAITING_AGENT);
 
   return connection_state_;
 }
 
 void MicroROSWrapper::spinSome()
 {
-  if (connection_state_ == AGENT_CONNECTED) {
-    rclc_executor_spin_some(&executor_, RCL_MS_TO_NS(100));
-  } else {
-    Serial.println("Error occured");
-    while (1) {
-      digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
-      delay(300);
-    }
+  if (connection_state_ != AGENT_CONNECTED) {
+    RCCHECK(RCL_RET_ERROR);
   }
+
+  rclc_executor_spin_some(&executor_, RCL_MS_TO_NS(100));
 }
 
 void MicroROSWrapper::imuTimerCallback(rcl_timer_t * timer, int64_t last_call_time)
@@ -238,16 +217,19 @@ void MicroROSWrapper::initJointStatesMsg()
   joint_state_msg_.name.data[0] = micro_ros_string_utilities_init("left_wheel");
   joint_state_msg_.name.data[1] = micro_ros_string_utilities_init("right_wheel");
 
+  joint_state_msg_.position.data = (double *)malloc(2 * sizeof(double));
   joint_state_msg_.position.size = 2;
   joint_state_msg_.position.capacity = 2;
   joint_state_msg_.position.data[0] = 0.0;
   joint_state_msg_.position.data[1] = 0.0;
 
+  joint_state_msg_.velocity.data = (double *)malloc(2 * sizeof(double));
   joint_state_msg_.velocity.size = 2;
   joint_state_msg_.velocity.capacity = 2;
   joint_state_msg_.velocity.data[0] = 0.0;
   joint_state_msg_.velocity.data[1] = 0.0;
 
+  joint_state_msg_.effort.data = (double *)malloc(2 * sizeof(double));
   joint_state_msg_.effort.size = 2;
   joint_state_msg_.effort.capacity = 2;
   joint_state_msg_.effort.data[0] = 0.0;

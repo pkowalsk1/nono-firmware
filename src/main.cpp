@@ -72,35 +72,27 @@ void setup()
 
 void loop()
 {
-  switch (uros_wrapper->getConnectionState()) {
+  uros_state_t connection_state = uros_wrapper->evaluateConnectionState();
+
+  switch (connection_state) {
     case WAITING_AGENT:
       Serial.println("Waiting for the agent...");
-      uros_wrapper->evaluateConnectionState();
-
-      // TODO: use other method of delay
       delay(500);
       break;
 
     case AGENT_AVAILABLE:
-      Serial.println("Attempting to create node");
+      Serial.println("Attempting to create node...");
       uros_wrapper->activate();
 
-      if (uros_wrapper->getConnectionState() == WAITING_AGENT) {
-        Serial.println("Creating node failed.");
-        uros_wrapper->deactivate();
-      };
+      Serial.println("Node created successfully.");
       break;
 
     case AGENT_CONNECTED:
-      uros_wrapper->evaluateConnectionState();
-      if (uros_wrapper->getConnectionState() == AGENT_CONNECTED) {
-        Serial.println("Spin");
-        uros_wrapper->spinSome();
-      }
+      uros_wrapper->spinSome();
       break;
 
     case AGENT_DISCONNECTED:
-      Serial.println("Agent disconnected");
+      Serial.println("Agent disconnected. Deactivating...");
       uros_wrapper->deactivate();
       break;
 

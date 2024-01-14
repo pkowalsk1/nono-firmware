@@ -18,7 +18,7 @@
   {                                                           \
     rcl_ret_t temp_rc = fn;                                   \
     if ((temp_rc != RCL_RET_OK)) {                            \
-      Serial.println("Error occured");                        \
+      Serial.println("Error occured: " + temp_rc);            \
       while (1) {                                             \
         digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN)); \
         delay(300);                                           \
@@ -26,11 +26,12 @@
     }                                                         \
   }
 
-#define RCSOFTCHECK(fn)            \
-  {                                \
-    rcl_ret_t temp_rc = fn;        \
-    if ((temp_rc != RCL_RET_OK)) { \
-    }                              \
+#define RCSOFTCHECK(fn)                            \
+  {                                                \
+    rcl_ret_t temp_rc = fn;                        \
+    if ((temp_rc != RCL_RET_OK)) {                 \
+      Serial.println("Error occured: " + temp_rc); \
+    }                                              \
   }
 
 enum uros_state_t {
@@ -48,9 +49,9 @@ public:
 
   static MicroROSWrapper * getInstance();
 
-  bool init(arduino::UART & uros_serial);
-  bool activate();
-  bool deactivate();
+  void init(arduino::UART & uros_serial);
+  void activate();
+  void deactivate();
   void spinSome();
 
   uros_state_t evaluateConnectionState();
