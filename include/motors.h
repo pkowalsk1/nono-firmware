@@ -15,11 +15,11 @@ static const double max_ang_vel = 35.0;
 static const uint16_t min_pwm = 7;
 
 static const uint16_t enc_resolution = 64;
-static const double gearbox_ration = 7.5;
+static const double gearbox_ration = 15.0;
 static const double tick_per_2pi_rad = ((enc_resolution * gearbox_ration) / (2 * PI));
 
 static const double kp_gain = 4.0;
-static const double ki_gain = 2.5;
+static const double ki_gain = 1.5;
 static const double kd_gain = 2.0;
 static const double vel_filter_coeff_a = 0.7767416;
 static const double vel_filter_coeff_b = 0.1116292;

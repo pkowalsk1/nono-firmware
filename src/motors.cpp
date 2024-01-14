@@ -26,8 +26,13 @@ void WheelMotorDriver::update(motors_cmd_data_t& data_queue)
 
 void WheelMotorDriver::pidControlLoop()
 {
+  // TODO:
+  //  - fix pwm noise at 0 setpoint (+/- done)
+  //  - fix full speed when agent disconnected 
+
   if (micros() - cmd_update_last_time_ >= cmd_vel_timeout * 1e6) {
     set_point_ = 0;
+    error_sum_ = 0;
   }
   set_point_ = constrain(set_point_, -max_ang_vel, max_ang_vel);
 
@@ -39,11 +44,7 @@ void WheelMotorDriver::pidControlLoop()
 
   double pid_out_ = p_term + i_term + d_term;
 
-  if (pid_out_ < min_pwm && pid_out_ > -min_pwm) {
-    pid_out_ = (int16_t)0;
-  } else {
-    pid_out_ = (int16_t)constrain(pid_out_, -255, 255);
-  }
+  pid_out_ = (int16_t)constrain(pid_out_, -255, 255);
 
   setSpeed(pid_out_);
 
@@ -71,6 +72,10 @@ double WheelMotorDriver::angVelUpdate()
   ang_vel_prev_ = ang_vel_;
   vel_last_time_ = time_now;
   last_encoder_value_ = actual_encoder_value_;
+
+  if(default_direction_ == 1){
+    Serial.println(last_encoder_value_); 
+  }
 
   return ang_vel_filtered_;
 }

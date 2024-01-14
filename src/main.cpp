@@ -8,17 +8,12 @@
 #include "motors.h"
 #include "uros/u_ros_cfg.h"
 
-UART uRosSerial(UROS_SERIAL_TX_, UROS_SERIAL_RX_, NC, NC);
-uros_state_t uros_state;
-
 WheelMotorDriver left_motor_wheel(M1_PWM_A, M1_PWM_B, M1_ENC_A, M1_ENC_B, m1_default_dir);
 WheelMotorDriver right_motor_wheel(M2_PWM_A, M2_PWM_B, M2_ENC_A, M2_ENC_B, m2_default_dir);
 ImuDriver imu_bno(55, 0x29);
 
-extern rclc_executor_t executor;
-extern ImuRosEvent* imu_timer_event;
-extern JointPubRosEvent* joint_timer_event;
-extern MotorsCmdRosEvent* motors_cmd_event;
+arduino::UART uros_serial(UROS_SERIAL_TX_, UROS_SERIAL_RX_, NC, NC);
+MicroROSWrapper * uros_wrapper = MicroROSWrapper::getInstance();
 
 volatile bool shutdown_btn_pressed = false;
 
@@ -41,12 +36,12 @@ void shutdown_handler()
 
 void setup()
 {
-  for (const PinModeInfo& pin : pin_map_gpio) {
-    pinMode(pin.gpio, pin.mode);
+  for (const GPIOPinDirection & gpio : pin_directions) {
+    pinMode(gpio.pin_number, gpio.direction);
   }
 
-  for (const PinFncInfo& pin : pin_map_fnc_gpio) {
-    gpio_set_function(pin.gpio, pin.fnc);
+  for (const GPIOPinFunction & gpio : pin_functions) {
+    gpio_set_function(gpio.pin_number, gpio.function);
   }
 
   attachInterrupt(
@@ -55,27 +50,21 @@ void setup()
     digitalPinToInterrupt(M2_ENC_A), []() { right_motor_wheel.readEncoder(); }, RISING);
   attachInterrupt(
     digitalPinToInterrupt(POWER_BTN), []() { shutdown_btn_pressed = true; }, FALLING);
-
-  Wire.begin();
-
-  Serial.begin(115200);
-  uRosSerial.begin(576000);
-
-  imu_bno.init();
-
   multicore_launch_core1(shutdown_handler);
 
+  Serial.begin(115200);
+  uros_serial.begin(576000);
+  Wire.begin();
+
+  imu_bno.init();
+  uros_wrapper->init(uros_serial);
+
   // setup uRos entities
-  imu_timer_event->add(&imu_bno);
-  joint_timer_event->add(&left_motor_wheel);
-  motors_cmd_event->add(&left_motor_wheel);
-  joint_timer_event->add(&right_motor_wheel);
-  motors_cmd_event->add(&right_motor_wheel);
-
-  set_microros_serial_transports(uRosSerial);
-  delay(2000);
-
-  uros_state = WAITING_AGENT;
+  // imu_timer_event->add(&imu_bno);
+  // joint_timer_event->add(&left_motor_wheel);
+  // motors_cmd_event->add(&left_motor_wheel);
+  // joint_timer_event->add(&right_motor_wheel);
+  // motors_cmd_event->add(&right_motor_wheel);
 
   digitalWrite(LED_BUILTIN, HIGH);
   delay(100);
@@ -83,33 +72,38 @@ void setup()
 
 void loop()
 {
-  switch (uros_state) {
+  switch (uros_wrapper->getConnectionState()) {
     case WAITING_AGENT:
-      EXECUTE_EVERY_N_MS(500, uros_state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1))
-                                             ? AGENT_AVAILABLE
-                                             : WAITING_AGENT;);
       Serial.println("Waiting for the agent...");
+      uros_wrapper->evaluateConnectionState();
+
+      // TODO: use other method of delay
+      delay(500);
       break;
+
     case AGENT_AVAILABLE:
       Serial.println("Attempting to create node");
-      uros_state = (true == uRosCreateEntities()) ? AGENT_CONNECTED : WAITING_AGENT;
-      if (uros_state == WAITING_AGENT) {
-        uRosDestroyEntities();
+      uros_wrapper->activate();
+
+      if (uros_wrapper->getConnectionState() == WAITING_AGENT) {
+        Serial.println("Creating node failed.");
+        uros_wrapper->deactivate();
       };
       break;
+
     case AGENT_CONNECTED:
-      EXECUTE_EVERY_N_MS(200, uros_state = (RMW_RET_OK == rmw_uros_ping_agent(100, 1))
-                                             ? AGENT_CONNECTED
-                                             : AGENT_DISCONNECTED;);
-      if (uros_state == AGENT_CONNECTED) {
-        rclc_executor_spin_some(&executor, RCL_MS_TO_NS(10));
+      uros_wrapper->evaluateConnectionState();
+      if (uros_wrapper->getConnectionState() == AGENT_CONNECTED) {
+        Serial.println("Spin");
+        uros_wrapper->spinSome();
       }
       break;
+
     case AGENT_DISCONNECTED:
       Serial.println("Agent disconnected");
-      uRosDestroyEntities();
-      uros_state = WAITING_AGENT;
+      uros_wrapper->deactivate();
       break;
+
     default:
       break;
   }

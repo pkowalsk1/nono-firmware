@@ -14,11 +14,10 @@ public:
 
   bool init();
 
+  // imu_data_t getImuData() { return queryImuData(); }
+
 protected:
-  void update(imu_data_t& data_queue) override
-  {
-    data_queue = queryImuData();
-  }
+  void update(imu_data_t & data_queue) override { data_queue = queryImuData(); }
 
 private:
   imu_data_t queryImuData();

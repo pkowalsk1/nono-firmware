@@ -10,5 +10,5 @@ services:
       - /dev:/dev 
       - /dev/shm:/dev/shm
     devices:
-      - /dev/ttyACM0
-    command: serial --dev /dev/ttyACM0 -v6
+      - /dev/ttyAMA1
+    command: serial --dev /dev/ttyAMA1 -b 576000 -v6
