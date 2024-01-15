@@ -2,6 +2,23 @@
 
 #include "uros/u_ros_cfg.h"
 
+template <typename DataQueueType>
+void MicroROSEvent<DataQueueType>::addObserver(EventObserverInterface<DataQueueType> * obsv)
+{
+  obsvs_.push_back(obsv);
+  data_queue_.resize(obsvs_.size());
+}
+
+template <typename DataQueueType>
+void MicroROSEvent<DataQueueType>::notify()
+{
+  if (obsvs_.empty()) return;
+
+  for (size_t i = 0; i < obsvs_.size(); i++) {
+    obsvs_[i]->update(data_queue_[i]);
+  }
+}
+
 MicroROSWrapper * MicroROSWrapper::instance_{nullptr};
 
 MicroROSWrapper * MicroROSWrapper::getInstance()
@@ -90,6 +107,15 @@ void MicroROSWrapper::deactivate()
   connection_state_ = WAITING_AGENT;
 }
 
+void MicroROSWrapper::spinSome()
+{
+  if (connection_state_ != AGENT_CONNECTED) {
+    RCCHECK(RCL_RET_ERROR);
+  }
+
+  rclc_executor_spin_some(&executor_, RCL_MS_TO_NS(100));
+}
+
 uros_state_t MicroROSWrapper::evaluateConnectionState()
 {
   const bool res = (RMW_RET_OK == rmw_uros_ping_agent(100, 1));
@@ -101,13 +127,19 @@ uros_state_t MicroROSWrapper::evaluateConnectionState()
   return connection_state_;
 }
 
-void MicroROSWrapper::spinSome()
+void MicroROSWrapper::addImuObserver(EventObserverInterface<imu_data_t> * obsv)
 {
-  if (connection_state_ != AGENT_CONNECTED) {
-    RCCHECK(RCL_RET_ERROR);
-  }
+  imu_timer_event_.addObserver(obsv);
+}
 
-  rclc_executor_spin_some(&executor_, RCL_MS_TO_NS(100));
+void MicroROSWrapper::addJointStateObserver(EventObserverInterface<joint_states_data_t> * obsv)
+{
+  joint_timer_event_.addObserver(obsv);
+}
+
+void MicroROSWrapper::addCmdObserver(EventObserverInterface<motors_cmd_data_t> * obsv)
+{
+  motors_cmd_event_.addObserver(obsv);
 }
 
 void MicroROSWrapper::imuTimerCallback(rcl_timer_t * timer, int64_t last_call_time)
@@ -116,7 +148,6 @@ void MicroROSWrapper::imuTimerCallback(rcl_timer_t * timer, int64_t last_call_ti
   MicroROSWrapper * instance = getInstance();
 
   if (timer != NULL) {
-    // TODO: https://github.com/micro-ROS/micro_ros_platformio/tree/main#time-source
     if (rmw_uros_epoch_synchronized()) {
       instance->imu_msg_.header.stamp.sec = rmw_uros_epoch_millis() / 1000;
       instance->imu_msg_.header.stamp.nanosec = rmw_uros_epoch_nanos();
@@ -126,19 +157,19 @@ void MicroROSWrapper::imuTimerCallback(rcl_timer_t * timer, int64_t last_call_ti
       instance->imu_msg_.header.stamp.nanosec = u_sec % (int64_t)1e6;
     }
 
-    // imu_timer_event->notify();
-    // imu_data_t imu_queue = imu_timer_event->getDataQueue()[0];
+    instance->imu_timer_event_.notify();
+    imu_data_t imu_queue = instance->imu_timer_event_.getDataQueue()[0];
 
-    // imu_msg_.orientation.x = imu_queue.orientation[0];
-    // imu_msg_.orientation.y = imu_queue.orientation[1];
-    // imu_msg_.orientation.z = imu_queue.orientation[2];
-    // imu_msg_.orientation.w = imu_queue.orientation[3];
-    // imu_msg_.angular_velocity.x = imu_queue.angular_velocity[0];
-    // imu_msg_.angular_velocity.y = imu_queue.angular_velocity[1];
-    // imu_msg_.angular_velocity.z = imu_queue.angular_velocity[2];
-    // imu_msg_.linear_acceleration.x = imu_queue.linear_acceleration[0];
-    // imu_msg_.linear_acceleration.y = imu_queue.linear_acceleration[1];
-    // imu_msg_.linear_acceleration.z = imu_queue.linear_acceleration[2];
+    instance->imu_msg_.orientation.x = imu_queue.orientation[0];
+    instance->imu_msg_.orientation.y = imu_queue.orientation[1];
+    instance->imu_msg_.orientation.z = imu_queue.orientation[2];
+    instance->imu_msg_.orientation.w = imu_queue.orientation[3];
+    instance->imu_msg_.angular_velocity.x = imu_queue.angular_velocity[0];
+    instance->imu_msg_.angular_velocity.y = imu_queue.angular_velocity[1];
+    instance->imu_msg_.angular_velocity.z = imu_queue.angular_velocity[2];
+    instance->imu_msg_.linear_acceleration.x = imu_queue.linear_acceleration[0];
+    instance->imu_msg_.linear_acceleration.y = imu_queue.linear_acceleration[1];
+    instance->imu_msg_.linear_acceleration.z = imu_queue.linear_acceleration[2];
 
     RCSOFTCHECK(rcl_publish(&instance->imu_publisher_, &instance->imu_msg_, NULL));
   }
@@ -159,13 +190,14 @@ void MicroROSWrapper::jointStateTimerCallback(rcl_timer_t * timer, int64_t last_
       instance->joint_state_msg_.header.stamp.nanosec = u_sec % (int64_t)1e6;
     }
 
-    // joint_timer_event->notify();
-    // std::vector<joint_states_data_t> joint_states_queue = joint_timer_event->getDataQueue();
+    instance->joint_timer_event_.notify();
+    std::vector<joint_states_data_t> joint_states_queue =
+      instance->joint_timer_event_.getDataQueue();
 
-    // for (size_t i = 0; i < joint_states_queue.size(); i++) {
-    //   joint_state_msg_.position.data[i] = joint_states_queue[i].actual_ang_pose;
-    //   joint_state_msg_.velocity.data[i] = joint_states_queue[i].actual_ang_vel;
-    // }
+    for (size_t i = 0; i < joint_states_queue.size(); i++) {
+      instance->joint_state_msg_.position.data[i] = joint_states_queue[i].actual_ang_pose;
+      instance->joint_state_msg_.velocity.data[i] = joint_states_queue[i].actual_ang_vel;
+    }
 
     RCSOFTCHECK(rcl_publish(&instance->joint_state_publisher_, &instance->joint_state_msg_, NULL));
   }
@@ -178,12 +210,15 @@ void MicroROSWrapper::motorsCmdCallback(const void * arg_input_message)
   static std_msgs__msg__Float32MultiArray * setpoint_msg;
   setpoint_msg = (std_msgs__msg__Float32MultiArray *)arg_input_message;
 
-  if (setpoint_msg->data.size == 2) {
-    std::vector<motors_cmd_data_t> motors_cmd_data{
-      setpoint_msg->data.data[0], setpoint_msg->data.data[1]};
-    // motors_cmd_event->setDataQueue(motors_cmd_data);
+  if (setpoint_msg->data.size != 2) {
+    return;
   }
-  // motors_cmd_event->notify();
+
+  std::vector<motors_cmd_data_t> motors_cmd_data{
+    setpoint_msg->data.data[0], setpoint_msg->data.data[1]};
+
+  instance->motors_cmd_event_.setDataQueue(motors_cmd_data);
+  instance->motors_cmd_event_.notify();
 }
 
 void MicroROSWrapper::initImuMsg()

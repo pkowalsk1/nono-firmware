@@ -8,9 +8,10 @@ WheelMotorDriver::WheelMotorDriver(
   enc_a_(enc_a_pin),
   enc_b_(enc_b_pin),
   default_direction_(default_direction)
-{}
+{
+}
 
-void WheelMotorDriver::update(joint_states_data_t& data_queue)
+void WheelMotorDriver::update(joint_states_data_t & data_queue)
 {
   data_queue.actual_ang_pose = angPoseUpdate();
   data_queue.actual_ang_vel = angVelUpdate();
@@ -18,7 +19,7 @@ void WheelMotorDriver::update(joint_states_data_t& data_queue)
   pidControlLoop();
 }
 
-void WheelMotorDriver::update(motors_cmd_data_t& data_queue)
+void WheelMotorDriver::update(motors_cmd_data_t & data_queue)
 {
   set_point_ = data_queue;
   cmd_update_last_time_ = micros();
@@ -28,7 +29,7 @@ void WheelMotorDriver::pidControlLoop()
 {
   // TODO:
   //  - fix pwm noise at 0 setpoint (+/- done)
-  //  - fix full speed when agent disconnected 
+  //  - fix full speed when agent disconnected
 
   if (micros() - cmd_update_last_time_ >= cmd_vel_timeout * 1e6) {
     set_point_ = 0;
@@ -56,8 +57,8 @@ double WheelMotorDriver::angVelUpdate()
 {
   long time_now = micros();
   float dt = ((float)(time_now - vel_last_time_)) / (1.0e6);
-  ang_vel_enc_cnt_based_ =
-    (actual_encoder_value_ - last_encoder_value_) / (tick_per_2pi_rad * dt) * default_direction_;
+  ang_vel_enc_cnt_based_ = (actual_encoder_value_ - last_encoder_value_) / (tick_per_2pi_rad * dt) *
+                           default_direction_;
 
   if (ang_vel_enc_cnt_based_ < min_ang_vel && ang_vel_enc_cnt_based_ > -min_ang_vel) {
     ang_vel_ = 0;
@@ -66,16 +67,12 @@ double WheelMotorDriver::angVelUpdate()
     ang_vel_ = ang_vel_enc_dt_based_ * direction;
   }
 
-  ang_vel_filtered_ =
-    vel_filter_coeff_a * ang_vel_filtered_ + vel_filter_coeff_b * (ang_vel_ + ang_vel_prev_);
+  ang_vel_filtered_ = vel_filter_coeff_a * ang_vel_filtered_ +
+                      vel_filter_coeff_b * (ang_vel_ + ang_vel_prev_);
 
   ang_vel_prev_ = ang_vel_;
   vel_last_time_ = time_now;
   last_encoder_value_ = actual_encoder_value_;
-
-  if(default_direction_ == 1){
-    Serial.println(last_encoder_value_); 
-  }
 
   return ang_vel_filtered_;
 }

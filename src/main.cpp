@@ -57,14 +57,13 @@ void setup()
   Wire.begin();
 
   imu_bno.init();
-  uros_wrapper->init(uros_serial);
 
-  // setup uRos entities
-  // imu_timer_event->add(&imu_bno);
-  // joint_timer_event->add(&left_motor_wheel);
-  // motors_cmd_event->add(&left_motor_wheel);
-  // joint_timer_event->add(&right_motor_wheel);
-  // motors_cmd_event->add(&right_motor_wheel);
+  uros_wrapper->init(uros_serial);
+  uros_wrapper->addImuObserver(&imu_bno);
+  uros_wrapper->addJointStateObserver(&left_motor_wheel);
+  uros_wrapper->addJointStateObserver(&right_motor_wheel);
+  uros_wrapper->addCmdObserver(&left_motor_wheel);
+  uros_wrapper->addCmdObserver(&right_motor_wheel);
 
   digitalWrite(LED_BUILTIN, HIGH);
   delay(100);

@@ -1,9 +1,10 @@
 #pragma once
 
+#include <vector>
+
 #include <Arduino.h>
 #include <micro_ros_platformio.h>
 #include <micro_ros_utilities/string_utilities.h>
-
 #include <rcl/rcl.h>
 #include <rclc/executor.h>
 #include <rclc/rclc.h>
@@ -12,7 +13,7 @@
 #include <sensor_msgs/msg/joint_state.h>
 #include <std_msgs/msg/float32_multi_array.h>
 
-#include "uros/subjects.h"
+#include "uros/observers.h"
 
 #define RCCHECK(fn)                                           \
   {                                                           \
@@ -41,6 +42,24 @@ enum uros_state_t {
   AGENT_DISCONNECTED,
 };
 
+template <typename DataQueueType>
+class MicroROSEvent
+{
+public:
+  MicroROSEvent(){};
+  ~MicroROSEvent(){};
+
+  void addObserver(EventObserverInterface<DataQueueType> * obsv);
+  void notify();
+
+  std::vector<DataQueueType> getDataQueue() const { return data_queue_; }
+  void setDataQueue(const std::vector<DataQueueType> & data_queue) { data_queue_ = data_queue; }
+
+protected:
+  std::vector<EventObserverInterface<DataQueueType> *> obsvs_;
+  std::vector<DataQueueType> data_queue_;
+};
+
 class MicroROSWrapper
 {
 public:
@@ -54,6 +73,10 @@ public:
   void deactivate();
   void spinSome();
 
+  void addImuObserver(EventObserverInterface<imu_data_t> * obsv);
+  void addJointStateObserver(EventObserverInterface<joint_states_data_t> * obsv);
+  void addCmdObserver(EventObserverInterface<motors_cmd_data_t> * obsv);
+
   uros_state_t evaluateConnectionState();
   uros_state_t getConnectionState() const { return connection_state_; }
 
@@ -62,13 +85,17 @@ protected:
   ~MicroROSWrapper(){};
 
 private:
-  void initImuMsg();
-  void initJointStatesMsg();
-  void initMotorsCmdMsg();
-
   static void imuTimerCallback(rcl_timer_t * timer, int64_t last_call_time);
   static void jointStateTimerCallback(rcl_timer_t * timer, int64_t last_call_time);
   static void motorsCmdCallback(const void * arg_input_message);
+
+  MicroROSEvent<imu_data_t> imu_timer_event_;
+  MicroROSEvent<joint_states_data_t> joint_timer_event_;
+  MicroROSEvent<motors_cmd_data_t> motors_cmd_event_;
+
+  void initImuMsg();
+  void initJointStatesMsg();
+  void initMotorsCmdMsg();
 
   static MicroROSWrapper * instance_;
 
