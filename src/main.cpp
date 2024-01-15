@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 
+#include "hardware/rtc.h"
+#include "hardware/xosc.h"
 #include "pico/multicore.h"
 
 #include "gpio_cfg.h"
@@ -12,7 +14,7 @@ WheelMotorDriver left_motor_wheel(M1_PWM_A, M1_PWM_B, M1_ENC_A, M1_ENC_B, m1_def
 WheelMotorDriver right_motor_wheel(M2_PWM_A, M2_PWM_B, M2_ENC_A, M2_ENC_B, m2_default_dir);
 ImuDriver imu_bno(55, 0x29);
 
-arduino::UART uros_serial(UROS_SERIAL_TX_, UROS_SERIAL_RX_, NC, NC);
+// SerialUART uros_serial(uart1, UROS_SERIAL_TX_, UROS_SERIAL_RX_);
 MicroROSWrapper * uros_wrapper = MicroROSWrapper::getInstance();
 
 volatile bool shutdown_btn_pressed = false;
@@ -53,12 +55,15 @@ void setup()
   multicore_launch_core1(shutdown_handler);
 
   Serial.begin(115200);
-  uros_serial.begin(576000);
+
+  Serial2.setRX(UROS_SERIAL_RX_);
+  Serial2.setTX(UROS_SERIAL_TX_);
+  Serial2.begin(576000);
   Wire.begin();
 
   imu_bno.init();
 
-  uros_wrapper->init(uros_serial);
+  uros_wrapper->init(Serial2);
   uros_wrapper->addImuObserver(&imu_bno);
   uros_wrapper->addJointStateObserver(&left_motor_wheel);
   uros_wrapper->addJointStateObserver(&right_motor_wheel);

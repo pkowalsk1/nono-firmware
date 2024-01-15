@@ -68,7 +68,7 @@ public:
 
   static MicroROSWrapper * getInstance();
 
-  void init(arduino::UART & uros_serial);
+  void init(SerialUART & uros_serial);
   void activate();
   void deactivate();
   void spinSome();
@@ -99,7 +99,7 @@ private:
 
   static MicroROSWrapper * instance_;
 
-  arduino::UART * uros_serial_;
+  SerialUART * uros_serial_;
   rclc_executor_t executor_;
   rclc_support_t support_;
   rcl_allocator_t allocator_;

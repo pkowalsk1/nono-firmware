@@ -29,7 +29,7 @@ MicroROSWrapper * MicroROSWrapper::getInstance()
   return instance_;
 }
 
-void MicroROSWrapper::init(arduino::UART & uros_serial)
+void MicroROSWrapper::init(SerialUART & uros_serial)
 {
   uros_serial_ = &uros_serial;
 
