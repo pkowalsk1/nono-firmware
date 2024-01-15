@@ -6,7 +6,7 @@
 #include "gpio_cfg.h"
 #include "imu.h"
 #include "motors.h"
-#include "uros/u_ros_cfg.h"
+#include "uros/u_ros.h"
 
 WheelMotorDriver left_motor_wheel(M1_PWM_A, M1_PWM_B, M1_ENC_A, M1_ENC_B, m1_default_dir);
 WheelMotorDriver right_motor_wheel(M2_PWM_A, M2_PWM_B, M2_ENC_A, M2_ENC_B, m2_default_dir);

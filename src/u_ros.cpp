@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include "uros/u_ros_cfg.h"
+#include "uros/u_ros.h"
 
 template <typename DataQueueType>
 void MicroROSEvent<DataQueueType>::addObserver(EventObserverInterface<DataQueueType> * obsv)
