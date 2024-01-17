@@ -14,7 +14,6 @@ WheelMotorDriver left_motor_wheel(M1_PWM_A, M1_PWM_B, M1_ENC_A, M1_ENC_B, m1_def
 WheelMotorDriver right_motor_wheel(M2_PWM_A, M2_PWM_B, M2_ENC_A, M2_ENC_B, m2_default_dir);
 ImuDriver imu_bno(55, 0x29);
 
-// SerialUART uros_serial(uart1, UROS_SERIAL_TX_, UROS_SERIAL_RX_);
 MicroROSWrapper * uros_wrapper = MicroROSWrapper::getInstance();
 
 volatile bool shutdown_btn_pressed = false;
