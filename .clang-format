@@ -1,23 +1,21 @@
 Language: Cpp
 BasedOnStyle: Google
 
-AllowShortFunctionsOnASingleLine: Empty
-AllowShortIfStatementsOnASingleLine: WithoutElse
-DerivePointerAlignment: false
-ReflowComments: false
-
+AccessModifierOffset: -2
 AlignAfterOpenBracket: AlwaysBreak
-BreakBeforeBraces: Custom
 BraceWrapping:
   AfterClass: true
   AfterFunction: true
   AfterNamespace: true
   AfterStruct: true
-  AfterEnum: true
-  SplitEmptyFunction: false
-
-AccessModifierOffset: -2
+BreakBeforeBraces: Custom
 ColumnLimit: 100
 ConstructorInitializerIndentWidth: 0
 ContinuationIndentWidth: 2
+DerivePointerAlignment: false
+PointerAlignment: Middle
+ReflowComments: true
 IncludeBlocks: Preserve
+AlignOperands: true
+PenaltyBreakAssignment: 21
+PenaltyBreakBeforeFirstCallParameter: 1

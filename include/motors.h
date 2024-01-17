@@ -6,23 +6,23 @@
 #include "uros/observers.h"
 
 // TODO: static constexpr
-static const int8_t m1_default_dir = 1;  // -1 (CW) or 1 (CCW)
-static const int8_t m2_default_dir = -1;
+static constexpr int8_t m1_default_dir = 1;  // -1 (CW) or 1 (CCW)
+static constexpr int8_t m2_default_dir = -1;
 
-static const double cmd_vel_timeout = 0.1;
-static const double min_ang_vel = 0.1;
-static const double max_ang_vel = 35.0;
-static const uint16_t min_pwm = 7;
+static constexpr double cmd_vel_timeout = 0.1;
+static constexpr double min_ang_vel = 0.1;
+static constexpr double max_ang_vel = 35.0;
+static constexpr uint16_t min_pwm = 7;
 
-static const uint16_t enc_resolution = 64;
-static const double gearbox_ration = 7.5;
-static const double tick_per_2pi_rad = ((enc_resolution * gearbox_ration) / (2 * PI));
+static constexpr uint16_t enc_resolution = 64;
+static constexpr double gearbox_ration = 15.0;
+static constexpr double tick_per_2pi_rad = ((enc_resolution * gearbox_ration) / (2 * PI));
 
-static const double kp_gain = 4.0;
-static const double ki_gain = 2.5;
-static const double kd_gain = 2.0;
-static const double vel_filter_coeff_a = 0.7767416;
-static const double vel_filter_coeff_b = 0.1116292;
+static constexpr double kp_gain = 4.0;
+static constexpr double ki_gain = 1.5;
+static constexpr double kd_gain = 2.0;
+static constexpr double vel_filter_coeff_a = 0.7767416;
+static constexpr double vel_filter_coeff_b = 0.1116292;
 
 class WheelMotorDriver : public EventObserverInterface<joint_states_data_t>,
                          public EventObserverInterface<motors_cmd_data_t>
@@ -36,8 +36,8 @@ public:
   void readEncoder();
 
 protected:
-  void update(joint_states_data_t& data_queue) override;
-  void update(motors_cmd_data_t& data_queue) override;
+  void update(joint_states_data_t & data_queue) override;
+  void update(motors_cmd_data_t & data_queue) override;
 
 private:
   void pidControlLoop();

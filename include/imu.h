@@ -1,4 +1,5 @@
 #pragma once
+
 #include <Adafruit_BNO055.h>
 #include <Adafruit_SPIDevice.h>
 #include <Adafruit_Sensor.h>
@@ -12,13 +13,8 @@ public:
   ImuDriver(int32_t sensorID, uint8_t address) : id{sensorID}, addr{address} {};
   ~ImuDriver() {}
 
-  bool init();
-
-protected:
-  void update(imu_data_t& data_queue) override
-  {
-    data_queue = queryImuData();
-  }
+  void init();
+  void update(imu_data_t & data_queue) override;
 
 private:
   imu_data_t queryImuData();
