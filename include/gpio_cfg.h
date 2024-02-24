@@ -44,9 +44,7 @@ const GPIOPinDirection pin_directions[] = {
   {LED_BUILTIN, OUTPUT}, {M1_PWM_A, OUTPUT}, {M1_PWM_B, OUTPUT}, {M2_PWM_A, OUTPUT},
   {M2_PWM_B, OUTPUT},    {M1_ENC_A, INPUT},  {M1_ENC_B, INPUT},  {M2_ENC_A, INPUT},
   {M2_ENC_B, INPUT},     {SHUTDOWN, OUTPUT}, {RPI_RUN, INPUT},   {RPI_SHUTDOWN, OUTPUT},
-  {VACUUM_EN, OUTPUT},
-  // it doesn't work with pinMode and interrupt attached, but POWER_BTN pin is pulled up anyway
-  // {POWER_BTN, INPUT_PULLUP},
+  {VACUUM_EN, OUTPUT},   {POWER_BTN, INPUT},
 };
 
 const GPIOPinFunction pin_functions[] = {
